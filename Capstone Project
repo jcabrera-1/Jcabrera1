@@ -1,0 +1,99 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import seaborn as sns
+import plotly as py
+import plotly.graph_objs as go
+from scipy import stats
+import re
+
+# Date time
+from datetime import datetime
+
+# PLotly express
+from plotly.subplots import make_subplots
+import plotly.express as px
+import plotly.io as pio
+import xlrd
+
+#Pandas Profiling
+import pandas_profiling
+
+#Sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA, KernelPCA
+from sklearn import svm
+from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import FeatureUnion
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tools.tools import add_constant
+
+Data Load
+Load Necessary Files
+
+msi = pd.read_csv(r'MSI.csv')
+neighborhood = pd.read_csv(r'Neighborhoods.csv')
+df_neighbors = neighborhood.iloc[:,6:]
+
+df_neighbors.columns
+
+df_neighbors = df_neighbors.T.reset_index()
+
+
+display(df_neighbors.head())
+msi.head()
+
+df_neighbors.columns = df_neighbors.iloc[0].to_list()
+
+#Drop unecessary rows
+df_neighbors = df_neighbors.drop(0, axis=0)
+df_neighbors = df_neighbors.drop(1, axis=0)
+
+#Reset the index
+df_neighbors.reset_index(inplace=True, drop= True)
+
+msi['Hood_ID'] = msi['Hood_ID'].astype(str)
+
+df = pd.merge(msi,df_neighbors, right_on = 'Subopic-Characteristic', left_on= 'Hood_ID', how = 'left').drop('Hood_ID', axis = 1)
+
+PREPROCESSING
+
+plt.figure(figsize= (28,6))
+sns.distplot(df['Grand Total'], hist=True, rug=True);
+
+#Change to int
+df.iloc[:,1:] = df.iloc[:,1:].astype(int)
+
+#Move neighborhood id to front and assign to index - in place
+mid = df['Subopic-Characteristic']
+df.drop(labels=['Subopic-Characteristic'], axis=1,inplace = True)
+df.insert(0, 'id', mid)
+df.set_index('id', drop = True, inplace= True)
+
+corr = df.corr()
+corr = round(pd.DataFrame.from_records(corr[['Assault' ,'Auto Theft', 'Break and Enter', 'Robbery','Theft Over', 'Grand Total']],index = list(corr.columns)).sort_values(by=['Grand Total']),2)
+
+corr[corr['Grand Total'] > .7]
+
+plt.figure(figsize=(7,7))
+sns.heatmap(msi.corr(), cmap = 'Blues')
+
+
+plt.figure(figsize = (12,20))
+sns.heatmap(corr, cmap = ["#9b59b6", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"],linecolor = 'white', linewidth = .05)
+
+plt.figure(figsize=(20,20))
+sns.heatmap(df.corr())
+
+
